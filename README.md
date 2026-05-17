@@ -30,7 +30,7 @@ Sistema de préstamo de recursos tecnológicos para las Unidades Tecnológicas d
 ## Tecnologías usadas
 
 - **Flutter 3.41.7** — Framework de UI multiplataforma
-- ""Dart 3.11.5** - Lenguaje
+- **Dart 3.11.5** - Lenguaje
 - **Provider** — Manejo de estado
 - **Mobile Scanner** — Escaneo de códigos de barras
 - **Flutter Local Notifications** — Notificaciones push locales
