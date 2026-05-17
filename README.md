@@ -16,7 +16,6 @@ Sistema de préstamo de recursos tecnológicos para las Unidades Tecnológicas d
 - Ver historial de préstamos propios
 - Perfil con foto personalizable
 - Notificaciones de alertas (préstamos por vencer, vencidos)
-- Escáner de código de barras para consultar estado de un recurso
 
 ### Rol Administrador
 - Panel principal con resumen estadístico (solicitudes pendientes, préstamos activos, recursos disponibles, usuarios)
@@ -30,7 +29,8 @@ Sistema de préstamo de recursos tecnológicos para las Unidades Tecnológicas d
 
 ## Tecnologías usadas
 
-- **Flutter 3.x** — Framework de UI multiplataforma
+- **Flutter 3.41.7** — Framework de UI multiplataforma
+- ""Dart 3.11.5** - Lenguaje
 - **Provider** — Manejo de estado
 - **Mobile Scanner** — Escaneo de códigos de barras
 - **Flutter Local Notifications** — Notificaciones push locales
