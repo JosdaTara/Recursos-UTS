@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Estados de una solicitud de préstamo
 enum EstadoSolicitud { pendiente, aprobada, rechazada }
 
-// Modelo que representa una solicitud de préstamo hecha por un usuario
 class Solicitud {
-  String usuarioNombre;     // Nombre del usuario que solicita
-  String documento;         // Documento de identidad del solicitante
-  String programa;          // Programa académico del solicitante
-  String recursoNombre;     // Nombre del recurso que se solicita
-  IconData recursoIcono;    // Icono del recurso para mostrar en la UI
-  List<String> accesorios;  // Accesorios adicionales solicitados
-  String? salon;            // Salón donde se usará (opcional)
-  String? equipo;           // Equipo específico del salón (opcional)
-  DateTime fechaPrestamo;       // Fecha y hora de inicio deseada
-  DateTime fechaDevolucion;     // Fecha y hora de devolución deseada
-  DateTime fechaSolicitud;      // Momento exacto en que se creó la solicitud
-  EstadoSolicitud estado;       // Estado: pendiente, aprobada o rechazada
+  String id;
+  String usuarioNombre;
+  String documento;
+  String programa;
+  String recursoNombre;
+  IconData recursoIcono;
+  List<String> accesorios;
+  String? salon;
+  String? equipo;
+  DateTime fechaPrestamo;
+  DateTime fechaDevolucion;
+  DateTime fechaSolicitud;
+  EstadoSolicitud estado;
 
   Solicitud({
+    String? id,
     required this.usuarioNombre,
     required this.documento,
     required this.programa,
@@ -30,19 +32,15 @@ class Solicitud {
     required this.fechaPrestamo,
     required this.fechaDevolucion,
     required this.fechaSolicitud,
-    this.estado = EstadoSolicitud.pendiente, // Al crearse, la solicitud está pendiente
-  });
+    this.estado = EstadoSolicitud.pendiente,
+  }) : id = id ?? 'sol_${fechaSolicitud.millisecondsSinceEpoch}';
 
-  // Retorna la fecha de préstamo como texto en formato dd/mm/aaaa
   String get fechaPrestamoStr =>
       '${fechaPrestamo.day.toString().padLeft(2, '0')}/${fechaPrestamo.month.toString().padLeft(2, '0')}/${fechaPrestamo.year}';
 
-  // Retorna la fecha de devolución como texto en formato dd/mm/aaaa
   String get fechaDevolucionStr =>
       '${fechaDevolucion.day.toString().padLeft(2, '0')}/${fechaDevolucion.month.toString().padLeft(2, '0')}/${fechaDevolucion.year}';
 
-  // Retorna la fecha de solicitud en formato relativo:
-  // "Hoy, 14:30" si fue hoy, "Ayer, 10:00" si fue ayer, o "dd/mm/aaaa" si fue antes
   String get fechaSolicitudStr {
     final diff = DateTime.now().difference(fechaSolicitud);
     if (diff.inDays == 0) {
@@ -51,5 +49,42 @@ class Solicitud {
       return 'Ayer, ${fechaSolicitud.hour.toString().padLeft(2, '0')}:${fechaSolicitud.minute.toString().padLeft(2, '0')}';
     }
     return '${fechaSolicitud.day.toString().padLeft(2, '0')}/${fechaSolicitud.month.toString().padLeft(2, '0')}/${fechaSolicitud.year}';
+  }
+
+  Map<String, dynamic> toFirestore() => {
+    'id': id,
+    'usuarioNombre': usuarioNombre,
+    'documento': documento,
+    'programa': programa,
+    'recursoNombre': recursoNombre,
+    'recursoIcono': recursoIcono.codePoint,
+    'accesorios': accesorios,
+    'salon': salon,
+    'equipo': equipo,
+    'fechaPrestamo': fechaPrestamo.toIso8601String(),
+    'fechaDevolucion': fechaDevolucion.toIso8601String(),
+    'fechaSolicitud': fechaSolicitud.toIso8601String(),
+    'estado': estado.name,
+  };
+
+  factory Solicitud.fromFirestore(DocumentSnapshot doc) {
+    final d = doc.data() as Map<String, dynamic>;
+    return Solicitud(
+      id: d['id'] as String? ?? doc.id,
+      usuarioNombre: d['usuarioNombre'] as String,
+      documento: d['documento'] as String,
+      programa: d['programa'] as String,
+      recursoNombre: d['recursoNombre'] as String,
+      recursoIcono: IconData(d['recursoIcono'] as int, fontFamily: 'MaterialIcons'),
+      accesorios: (d['accesorios'] as List).cast<String>(),
+      salon: d['salon'] as String?,
+      equipo: d['equipo'] as String?,
+      fechaPrestamo: DateTime.parse(d['fechaPrestamo'] as String),
+      fechaDevolucion: DateTime.parse(d['fechaDevolucion'] as String),
+      fechaSolicitud: DateTime.parse(d['fechaSolicitud'] as String),
+      estado: EstadoSolicitud.values.firstWhere(
+          (e) => e.name == d['estado'],
+          orElse: () => EstadoSolicitud.pendiente),
+    );
   }
 }

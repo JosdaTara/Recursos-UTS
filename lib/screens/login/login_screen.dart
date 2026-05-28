@@ -3,6 +3,8 @@
 // a la pantalla de usuario normal o de administrador según corresponda.
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_recursos_uts/providers/app_provider.dart';
 import 'package:flutter_recursos_uts/theme/app_theme.dart';
 import 'package:flutter_recursos_uts/widgets/background_scaffold.dart';
 import 'package:flutter_recursos_uts/widgets/glass_card.dart';
@@ -30,9 +32,6 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
 
-  // Credenciales predeterminadas para pruebas
-  static const _usuarioPredeterminado = 'admin@correo.com';
-  static const _contrasenaPredeterminada = '1234';
   static const _adminCorreo = 'admin@uts.com';
   static const _adminContrasena = 'admin123';
 
@@ -72,25 +71,37 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     setState(() => _cargando = true);
-    // Simula una petición de autenticación con retardo
-    await Future.delayed(const Duration(milliseconds: 1200));
+    final provider = context.read<AppProvider>();
+    await Future.doWhile(() => Future.delayed(const Duration(milliseconds: 100),
+        () => !provider.cargando));
     if (!mounted) return;
 
-    // Verifica las credenciales contra los valores predeterminados
     if (correo == _adminCorreo && pass == _adminContrasena) {
-      // Redirige al panel de administrador
       Navigator.pushReplacementNamed(context, '/homeAdmin');
-    } else if (correo == _usuarioPredeterminado &&
-        pass == _contrasenaPredeterminada) {
-      // Redirige al home de usuario normal
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      // Credenciales incorrectas: muestra error y restablece el botón
+      return;
+    }
+
+    // Busca el usuario en la lista de Firestore
+    final usuario = provider.usuarios.where((u) => u.correo == correo).firstOrNull;
+    if (usuario == null || usuario.password != pass) {
       setState(() => _cargando = false);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Correo o contraseña incorrectos'),
               backgroundColor: Colors.red));
+      return;
     }
+
+    if (!usuario.activo) {
+      setState(() => _cargando = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tu cuenta está desactivada'),
+              backgroundColor: Colors.red));
+      return;
+    }
+
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override

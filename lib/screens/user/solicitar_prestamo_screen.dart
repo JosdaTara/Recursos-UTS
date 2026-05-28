@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_recursos_uts/models/solicitud.dart';
 import 'package:flutter_recursos_uts/providers/app_provider.dart';
 import 'package:flutter_recursos_uts/theme/app_theme.dart';
 import 'package:flutter_recursos_uts/widgets/background_scaffold.dart';
@@ -294,6 +295,36 @@ class _SolicitarPrestamoScreenState extends State<SolicitarPrestamoScreen> {
           const SizedBox(width: 8),
           ElevatedButton.icon(
             onPressed: () {
+              final provider = context.read<AppProvider>();
+              final tipo = _recursos[_recursoSeleccionado]!['tipo'] as String;
+              final usuario = provider.usuarios.isNotEmpty
+                  ? provider.usuarios[0] : null;
+              final solicitud = Solicitud(
+                id: 'sol_${DateTime.now().millisecondsSinceEpoch}',
+                usuarioNombre: usuario?.nombre ?? 'Usuario',
+                documento: usuario?.documento ?? '—',
+                programa: usuario?.programa ?? '—',
+                recursoNombre: _recursoSeleccionado!,
+                recursoIcono: _recursos[_recursoSeleccionado]!['icono'] as IconData,
+                accesorios: tipo == 'accesorio'
+                    ? List.from(_accesoriosSeleccionados)
+                    : tipo == 'computador'
+                        ? []
+                        : [],
+                salon: tipo == 'computador' ? _salonSeleccionado : null,
+                equipo: tipo == 'computador' ? _equipoSeleccionado : null,
+                fechaPrestamo: DateTime(
+                  _fechaPrestamo!.year, _fechaPrestamo!.month, _fechaPrestamo!.day,
+                  _horaPrestamo!.hour, _horaPrestamo!.minute,
+                ),
+                fechaDevolucion: DateTime(
+                  _fechaDevolucion!.year, _fechaDevolucion!.month, _fechaDevolucion!.day,
+                  _horaDevolucion!.hour, _horaDevolucion!.minute,
+                ),
+                fechaSolicitud: DateTime.now(),
+                estado: EstadoSolicitud.pendiente,
+              );
+              provider.agregarSolicitud(solicitud);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('¡Solicitud enviada!'),

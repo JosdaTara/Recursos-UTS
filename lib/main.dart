@@ -2,6 +2,7 @@
 // Inicializa los servicios globales (notificaciones locales) y levanta el árbol de widgets con Provider.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'providers/app_provider.dart';
 import 'services/notificacion_service.dart';
@@ -18,6 +19,7 @@ import 'screens/admin/home_admin_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   await NotificacionService().init();
   runApp(
     ChangeNotifierProvider(

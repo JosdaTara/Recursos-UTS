@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Estados por los que puede pasar un préstamo
 enum EstadoPrestamo { activo, devuelto, vencido }
 
-// Modelo que representa un préstamo ya aprobado y en curso/finalizado
 class Prestamo {
-  String usuarioNombre;         // Nombre del usuario que tomó prestado el recurso
-  String recursoNombre;         // Nombre del recurso prestado
-  IconData recursoIcono;        // Icono del recurso para mostrar en la UI
-  String? salon;                // Salón donde se usará el recurso (opcional)
-  String? equipo;               // Equipo específico del salón (opcional, ej: PC-01)
-  List<String> accesorios;      // Accesorios solicitados junto con el recurso
-  DateTime fechaPrestamo;       // Fecha y hora de inicio del préstamo
-  DateTime fechaDevolucion;     // Fecha y hora límite para devolver
-  EstadoPrestamo estado;        // Estado actual del préstamo
+  String id;
+  String usuarioNombre;
+  String recursoNombre;
+  IconData recursoIcono;
+  String? salon;
+  String? equipo;
+  List<String> accesorios;
+  DateTime fechaPrestamo;
+  DateTime fechaDevolucion;
+  EstadoPrestamo estado;
 
   Prestamo({
+    String? id,
     required this.usuarioNombre,
     required this.recursoNombre,
     required this.recursoIcono,
@@ -24,14 +26,43 @@ class Prestamo {
     this.accesorios = const [],
     required this.fechaPrestamo,
     required this.fechaDevolucion,
-    this.estado = EstadoPrestamo.activo, // Al crearse, el préstamo está activo
-  });
+    this.estado = EstadoPrestamo.activo,
+  }) : id = id ?? 'pre_${fechaPrestamo.millisecondsSinceEpoch}';
 
-  // Retorna la fecha de préstamo como texto en formato dd/mm/aaaa
   String get fechaPrestamoStr =>
       '${fechaPrestamo.day.toString().padLeft(2, '0')}/${fechaPrestamo.month.toString().padLeft(2, '0')}/${fechaPrestamo.year}';
 
-  // Retorna la fecha de devolución como texto en formato dd/mm/aaaa
   String get fechaDevolucionStr =>
       '${fechaDevolucion.day.toString().padLeft(2, '0')}/${fechaDevolucion.month.toString().padLeft(2, '0')}/${fechaDevolucion.year}';
+
+  Map<String, dynamic> toFirestore() => {
+    'id': id,
+    'usuarioNombre': usuarioNombre,
+    'recursoNombre': recursoNombre,
+    'recursoIcono': recursoIcono.codePoint,
+    'salon': salon,
+    'equipo': equipo,
+    'accesorios': accesorios,
+    'fechaPrestamo': fechaPrestamo.toIso8601String(),
+    'fechaDevolucion': fechaDevolucion.toIso8601String(),
+    'estado': estado.name,
+  };
+
+  factory Prestamo.fromFirestore(DocumentSnapshot doc) {
+    final d = doc.data() as Map<String, dynamic>;
+    return Prestamo(
+      id: d['id'] as String? ?? doc.id,
+      usuarioNombre: d['usuarioNombre'] as String,
+      recursoNombre: d['recursoNombre'] as String,
+      recursoIcono: IconData(d['recursoIcono'] as int, fontFamily: 'MaterialIcons'),
+      salon: d['salon'] as String?,
+      equipo: d['equipo'] as String?,
+      accesorios: (d['accesorios'] as List).cast<String>(),
+      fechaPrestamo: DateTime.parse(d['fechaPrestamo'] as String),
+      fechaDevolucion: DateTime.parse(d['fechaDevolucion'] as String),
+      estado: EstadoPrestamo.values.firstWhere(
+          (e) => e.name == d['estado'],
+          orElse: () => EstadoPrestamo.activo),
+    );
+  }
 }
