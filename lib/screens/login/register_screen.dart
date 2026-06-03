@@ -3,6 +3,9 @@
 // académico y confirmación de contraseña. Incluye validaciones básicas.
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_recursos_uts/models/usuario.dart';
+import 'package:flutter_recursos_uts/providers/app_provider.dart';
 import 'package:flutter_recursos_uts/theme/app_theme.dart';
 import 'package:flutter_recursos_uts/widgets/background_scaffold.dart';
 import 'package:flutter_recursos_uts/widgets/glass_card.dart';
@@ -100,15 +103,24 @@ class _RegisterScreenState extends State<RegisterScreen>
     }
 
     setState(() => _cargando = true);
-    // Simula el envío de datos al servidor
-    await Future.delayed(const Duration(milliseconds: 1200));
+    final provider = context.read<AppProvider>();
+    final usuario = Usuario(
+      nombre: nombre,
+      correo: correo,
+      documento: doc,
+      programa: _programaSeleccionado!,
+    );
+    final error = await provider.registrarUsuario(usuario, pass);
     if (!mounted) return;
+    setState(() => _cargando = false);
 
-    // Muestra mensaje de éxito y redirige al login
-    ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('¡Cuenta creada exitosamente!'),
-            backgroundColor: AppColors.primary));
-    Navigator.pushReplacementNamed(context, '/login');
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red));
+      return;
+    }
+
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   // Construye un campo de texto estilizado con ícono y opción de mostrar/ocultar

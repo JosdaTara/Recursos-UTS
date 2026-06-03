@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Estados de una solicitud de préstamo
@@ -10,7 +9,7 @@ class Solicitud {
   String documento;
   String programa;
   String recursoNombre;
-  IconData recursoIcono;
+  String recursoIcono;
   List<String> accesorios;
   String? salon;
   String? equipo;
@@ -57,7 +56,7 @@ class Solicitud {
     'documento': documento,
     'programa': programa,
     'recursoNombre': recursoNombre,
-    'recursoIcono': recursoIcono.codePoint,
+    'recursoIcono': recursoIcono,
     'accesorios': accesorios,
     'salon': salon,
     'equipo': equipo,
@@ -75,7 +74,8 @@ class Solicitud {
       documento: d['documento'] as String,
       programa: d['programa'] as String,
       recursoNombre: d['recursoNombre'] as String,
-      recursoIcono: IconData(d['recursoIcono'] as int, fontFamily: 'MaterialIcons'),
+      recursoIcono: d['recursoIcono'] is String && (d['recursoIcono'] as String).isNotEmpty
+          ? d['recursoIcono'] as String : 'inventory_2',
       accesorios: (d['accesorios'] as List).cast<String>(),
       salon: d['salon'] as String?,
       equipo: d['equipo'] as String?,

@@ -5,6 +5,7 @@ import 'package:flutter_recursos_uts/models/prestamo.dart';
 import 'package:flutter_recursos_uts/models/recurso.dart';
 import 'package:flutter_recursos_uts/providers/app_provider.dart';
 import 'package:flutter_recursos_uts/theme/app_theme.dart';
+import 'package:flutter_recursos_uts/utils/icon_utils.dart';
 import 'package:flutter_recursos_uts/widgets/background_scaffold.dart';
 import 'package:flutter_recursos_uts/widgets/header_with_back.dart';
 import 'package:flutter_recursos_uts/widgets/info_row.dart';
@@ -102,7 +103,7 @@ class _EscanerScreenState extends State<EscanerScreen> {
             Container(width: 65, height: 65,
                 decoration: const BoxDecoration(
                     color: Colors.white, shape: BoxShape.circle),
-                child: Icon(recurso.icono, size: 34,
+                child: Icon(getIcon(recurso.icono), size: 34,
                     color: AppColors.primary)),
             const SizedBox(height: 8),
             Text(recurso.nombre, style: const TextStyle(color: Colors.white,
@@ -132,8 +133,10 @@ class _EscanerScreenState extends State<EscanerScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  context.read<AppProvider>().devolverPrestamo(prestamo);
+                onPressed: () async {
+                  final provider = context.read<AppProvider>();
+                  await provider.devolverPrestamo(prestamo);
+                  if (!mounted) return;
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

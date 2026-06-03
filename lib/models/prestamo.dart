@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Estados por los que puede pasar un préstamo
@@ -8,7 +7,7 @@ class Prestamo {
   String id;
   String usuarioNombre;
   String recursoNombre;
-  IconData recursoIcono;
+  String recursoIcono;
   String? salon;
   String? equipo;
   List<String> accesorios;
@@ -39,7 +38,7 @@ class Prestamo {
     'id': id,
     'usuarioNombre': usuarioNombre,
     'recursoNombre': recursoNombre,
-    'recursoIcono': recursoIcono.codePoint,
+    'recursoIcono': recursoIcono,
     'salon': salon,
     'equipo': equipo,
     'accesorios': accesorios,
@@ -54,7 +53,8 @@ class Prestamo {
       id: d['id'] as String? ?? doc.id,
       usuarioNombre: d['usuarioNombre'] as String,
       recursoNombre: d['recursoNombre'] as String,
-      recursoIcono: IconData(d['recursoIcono'] as int, fontFamily: 'MaterialIcons'),
+      recursoIcono: d['recursoIcono'] is String && (d['recursoIcono'] as String).isNotEmpty
+          ? d['recursoIcono'] as String : 'inventory_2',
       salon: d['salon'] as String?,
       equipo: d['equipo'] as String?,
       accesorios: (d['accesorios'] as List).cast<String>(),

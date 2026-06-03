@@ -8,9 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_recursos_uts/providers/app_provider.dart';
 import 'package:flutter_recursos_uts/theme/app_theme.dart';
+import 'package:flutter_recursos_uts/utils/icon_utils.dart';
 import 'package:flutter_recursos_uts/widgets/background_scaffold.dart';
 import 'package:flutter_recursos_uts/widgets/glass_card.dart';
 import 'package:flutter_recursos_uts/screens/user/notificaciones_screen.dart';
+import 'package:flutter_recursos_uts/screens/user/perfil_screen.dart';
 import 'solicitudes_screen.dart';
 import 'gestion_recursos_screen.dart';
 import 'gestion_usuarios_screen.dart';
@@ -27,24 +29,25 @@ class HomeAdminScreen extends StatelessWidget {
     return BackgroundScaffold(
       backgroundColor: AppColors.bgDark,
       child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(provider, context),
-              const SizedBox(height: 24),
-              _buildAlertas(provider),
-              const SizedBox(height: 24),
-              _buildResumen(provider),
-              const SizedBox(height: 24),
-              _buildRecursoMasPrestado(provider),
-              const SizedBox(height: 24),
-              _buildGestion(context, provider),
-              const SizedBox(height: 24),
-              _buildLogout(context),
-              const SizedBox(height: 16),
-            ],
+        child: RefreshIndicator(
+          onRefresh: () => context.read<AppProvider>().refrescarDatos(),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(provider, context),
+                const SizedBox(height: 24),
+                _buildAlertas(provider),
+                const SizedBox(height: 24),
+                _buildResumen(provider),
+                const SizedBox(height: 24),
+                _buildRecursoMasPrestado(provider),
+                const SizedBox(height: 24),
+                _buildGestion(context, provider),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
@@ -55,28 +58,36 @@ class HomeAdminScreen extends StatelessWidget {
     return GlassCard(
       child: Row(
         children: [
-          Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.5)),
+          GestureDetector(
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PerfilScreen())),
+            child: Container(
+              width: 52, height: 52,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.5)),
+              ),
+              child: const Icon(Icons.admin_panel_settings, color: Colors.white, size: 28),
             ),
-            child: const Icon(Icons.admin_panel_settings, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('PANEL DE ADMINISTRACIÓN',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 3),
-                const Text('Bienvenido, Administrador',
-                    style: TextStyle(color: Colors.white, fontSize: 18,
-                        fontWeight: FontWeight.bold)),
-              ],
+            child: GestureDetector(
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const PerfilScreen())),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('PANEL DE ADMINISTRACIÓN',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 3),
+                  Text('Bienvenido, ${provider.usuarioActual?.nombre ?? 'Administrador'}',
+                      style: TextStyle(color: Colors.white, fontSize: 18,
+                          fontWeight: FontWeight.bold)),
+                ],
+              ),
             ),
           ),
           GestureDetector(
@@ -243,7 +254,7 @@ class HomeAdminScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.5)),
               ),
-              child: Icon(mas['icono'] as IconData,
+              child: Icon(getIcon(mas['icono'] as String),
                   color: AppColors.primaryLight, size: 28),
             ),
             const SizedBox(width: 16),
@@ -350,28 +361,6 @@ class HomeAdminScreen extends StatelessWidget {
           ])),
           const Icon(Icons.chevron_right, color: Colors.white54),
         ]),
-      ),
-    );
-  }
-
-  Widget _buildLogout(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () => Navigator.pushNamedAndRemoveUntil(
-            context, '/login', (route) => false),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.redAccent,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          elevation: 0,
-        ),
-        icon: const Icon(Icons.logout, size: 18),
-        label: const Text('CERRAR SESIÓN', style: TextStyle(
-            fontWeight: FontWeight.bold, letterSpacing: 1.2)),
       ),
     );
   }

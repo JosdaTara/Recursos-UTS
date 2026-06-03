@@ -5,6 +5,7 @@ enum TipoNotificacion {
   aprobado,    // Préstamo aprobado por el administrador
   recordatorio, // Recordatorio de devolución próxima a vencer
   vencido,      // Préstamo cuya fecha de devolución ya expiró
+  solicitud,   // Nueva solicitud de préstamo (admin puede aceptar/rechazar)
 }
 
 class Notificacion {
@@ -15,6 +16,8 @@ class Notificacion {
   String hora;
   DateTime fecha;
   bool leida;
+  String? solicitudId;
+  String? usuarioCorreo;
 
   Notificacion({
     String? id,
@@ -24,6 +27,8 @@ class Notificacion {
     required this.hora,
     DateTime? fecha,
     this.leida = false,
+    this.solicitudId,
+    this.usuarioCorreo,
   }) : id = id ?? 'not_${DateTime.now().millisecondsSinceEpoch}',
        fecha = fecha ?? DateTime.now();
 
@@ -35,6 +40,8 @@ class Notificacion {
     'hora': hora,
     'fecha': fecha.toIso8601String(),
     'leida': leida,
+    if (solicitudId != null) 'solicitudId': solicitudId,
+    if (usuarioCorreo != null) 'usuarioCorreo': usuarioCorreo,
   };
 
   factory Notificacion.fromFirestore(DocumentSnapshot doc) {
@@ -49,6 +56,8 @@ class Notificacion {
       hora: d['hora'] as String,
       fecha: d['fecha'] != null ? DateTime.parse(d['fecha'] as String) : null,
       leida: d['leida'] as bool? ?? false,
+      solicitudId: d['solicitudId'] as String?,
+      usuarioCorreo: d['usuarioCorreo'] as String?,
     );
   }
 }

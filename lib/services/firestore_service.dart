@@ -12,7 +12,13 @@ class FirestoreService {
 
   Future<List<Usuario>> getUsuarios() async {
     final snap = await _db.collection('usuarios').get();
-    return snap.docs.map((d) => Usuario.fromFirestore(d)).toList();
+    return snap.docs.map((d) {
+      try {
+        return Usuario.fromFirestore(d);
+      } catch (_) {
+        return null;
+      }
+    }).whereType<Usuario>().toList();
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> usuariosStream() {
@@ -111,6 +117,10 @@ class FirestoreService {
 
   Future<void> marcarNotificacionLeida(String id) async {
     await _db.collection('notificaciones').doc(id).update({'leida': true});
+  }
+
+  Future<void> deleteNotificacion(String id) async {
+    await _db.collection('notificaciones').doc(id).delete();
   }
 
   Future<void> marcarTodasLeidas() async {

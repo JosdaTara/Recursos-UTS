@@ -4,6 +4,7 @@ import 'package:flutter_recursos_uts/models/prestamo.dart';
 import 'package:flutter_recursos_uts/models/usuario.dart';
 import 'package:flutter_recursos_uts/providers/app_provider.dart';
 import 'package:flutter_recursos_uts/theme/app_theme.dart';
+import 'package:flutter_recursos_uts/utils/icon_utils.dart';
 import 'package:flutter_recursos_uts/widgets/background_scaffold.dart';
 import 'package:flutter_recursos_uts/widgets/estado_badge.dart';
 import 'package:flutter_recursos_uts/widgets/filter_chip_row.dart';
@@ -103,7 +104,9 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                         color: Colors.white70)),
                 const SizedBox(height: 12),
                 Text(u.nombre, style: const TextStyle(color: Colors.white,
-                    fontSize: 20, fontWeight: FontWeight.bold)),
+                    fontSize: 20, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
                 EstadoBadge(
                   texto: u.activo ? 'ACTIVO' : 'INACTIVO',
@@ -136,8 +139,8 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                       Container(width: 40, height: 40,
                           decoration: const BoxDecoration(color: Colors.white,
                               shape: BoxShape.circle),
-                          child: Icon(h.recursoIcono, size: 20,
-                              color: AppColors.primary)),
+child: Icon(getIcon(provider.iconoPorRecurso(h.recursoNombre)), size: 20,
+    color: AppColors.primary)),
                       const SizedBox(width: 12),
                       Expanded(child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -157,6 +160,32 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
+                      if (u.activo) {
+                        final activos = provider.prestamos
+                            .where((p) => p.usuarioNombre == u.nombre
+                                && p.estado == EstadoPrestamo.activo)
+                            .toList();
+                        if (activos.isNotEmpty) {
+                          showDialog(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              backgroundColor: AppColors.bgDark,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              title: const Text('NO SE PUEDE DESACTIVAR',
+                                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 16)),
+                              content: Text('El usuario tiene ${activos.length} préstamo${activos.length > 1 ? 's' : ''} activo${activos.length > 1 ? 's' : ''}. Debe devolverlo${activos.length > 1 ? 's' : ''} antes de desactivar la cuenta.',
+                                  style: const TextStyle(color: Colors.white70)),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('ENTENDIDO', style: TextStyle(fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          );
+                          return;
+                        }
+                      }
                       provider.toggleUsuarioActivo(index);
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -282,14 +311,18 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                               Expanded(child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(u.nombre, style: AppStyles.whiteBold16),
-                                      EstadoBadge(
-                                        texto: u.activo ? 'ACTIVO' : 'INACTIVO',
-                                        color: u.activo ? Colors.greenAccent : Colors.redAccent,
-                                      ),
-                                    ]),
+                                Row(children: [
+                                  Expanded(
+                                    child: Text(u.nombre,
+                                        style: AppStyles.whiteBold16,
+                                        overflow: TextOverflow.ellipsis),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  EstadoBadge(
+                                    texto: u.activo ? 'ACTIVO' : 'INACTIVO',
+                                    color: u.activo ? Colors.greenAccent : Colors.redAccent,
+                                  ),
+                                ]),
                                 const SizedBox(height: 4),
                                 Text(u.correo, style: AppStyles.white70_12),
                                 Row(children: [

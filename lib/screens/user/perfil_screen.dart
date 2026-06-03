@@ -64,7 +64,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
-    final usuario = provider.usuarios.isNotEmpty ? provider.usuarios[0] : null;
+    final usuario = provider.usuarioActual;
     final prestamosUsuario = provider.prestamos
         .where((p) => p.usuarioNombre == usuario?.nombre)
         .toList();
@@ -198,6 +198,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () {
+                          context.read<AppProvider>().cerrarSesion();
                           Navigator.pushNamedAndRemoveUntil(
                               context, '/login', (route) => false);
                         },

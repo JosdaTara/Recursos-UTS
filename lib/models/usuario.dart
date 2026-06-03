@@ -8,6 +8,7 @@ class Usuario {
   String documento;
   String programa;
   bool activo;
+  bool esAdmin;
 
   Usuario({
     this.id,
@@ -17,6 +18,7 @@ class Usuario {
     required this.documento,
     required this.programa,
     this.activo = true,
+    this.esAdmin = false,
   });
 
   Map<String, dynamic> toFirestore() => {
@@ -27,18 +29,20 @@ class Usuario {
     'documento': documento,
     'programa': programa,
     'activo': activo,
+    'esAdmin': esAdmin,
   };
 
   factory Usuario.fromFirestore(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;
     return Usuario(
       id: d['id'] as String?,
-      nombre: d['nombre'] as String,
-      correo: d['correo'] as String,
+      nombre: (d['nombre'] as String?) ?? '',
+      correo: (d['correo'] as String?) ?? '',
       password: d['password'] as String? ?? '1234',
-      documento: d['documento'] as String,
-      programa: d['programa'] as String,
+      documento: (d['documento'] as String?) ?? '',
+      programa: (d['programa'] as String?) ?? '',
       activo: d['activo'] as bool? ?? true,
+      esAdmin: d['esAdmin'] as bool? ?? false,
     );
   }
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_recursos_uts/models/recurso.dart';
 import 'package:flutter_recursos_uts/models/solicitud.dart';
 import 'package:flutter_recursos_uts/providers/app_provider.dart';
 import 'package:flutter_recursos_uts/theme/app_theme.dart';
+import 'package:flutter_recursos_uts/utils/icon_utils.dart';
 import 'package:flutter_recursos_uts/widgets/background_scaffold.dart';
 import 'package:flutter_recursos_uts/widgets/glass_card.dart';
 import 'package:flutter_recursos_uts/widgets/header_with_back.dart';
@@ -33,18 +35,13 @@ class _SolicitarPrestamoScreenState extends State<SolicitarPrestamoScreen> {
   // Lista de accesorios adicionales seleccionados (solo para tipo "accesorio")
   final List<String> _accesoriosSeleccionados = [];
 
-  // Catálogo de recursos disponibles para préstamo con su ícono, tipo y accesorios opcionales
-  final Map<String, Map<String, dynamic>> _recursos = {
-    'COMPUTADOR': {'icono': Icons.computer, 'tipo': 'computador'},
-    'VIDEO BEAM': {'icono': Icons.videocam, 'tipo': 'accesorio',
-        'accesorios': ['CABLE HDMI', 'CABLE RCA', 'EXTENSIÓN']},
-    'PARLANTES': {'icono': Icons.speaker, 'tipo': 'accesorio',
-        'accesorios': ['CABLE RCA', 'CABLE USB', 'EXTENSIÓN']},
-    'CABLE HDMI': {'icono': Icons.cable, 'tipo': 'simple'},
-    'CABLE RCA': {'icono': Icons.settings_input_composite, 'tipo': 'simple'},
-    'CABLE USB': {'icono': Icons.usb, 'tipo': 'simple'},
-    'EXTENSIÓN': {'icono': Icons.electrical_services, 'tipo': 'simple'},
-  };
+  // Determina el comportamiento UI según el recurso: 'computador' (salón+equipo),
+  // 'accesorio' (checkboxes de accesorios incluidos), o 'simple' (solo fechas)
+  String _tipoRecurso(Recurso r) {
+    if (r.nombre == 'COMPUTADOR') return 'computador';
+    if (r.accesoriosIncluidos.isNotEmpty) return 'accesorio';
+    return 'simple';
+  }
 
   // Abre un DatePicker para seleccionar la fecha de préstamo o devolución
   Future<void> _seleccionarFecha(bool esPrestamo) async {
@@ -114,12 +111,11 @@ class _SolicitarPrestamoScreenState extends State<SolicitarPrestamoScreen> {
   }
 
   // Construye una tarjeta individual para cada recurso en la cuadrícula de selección
-  Widget _buildTarjetaRecurso(String nombre) {
-    final data = _recursos[nombre]!;
-    final sel = _recursoSeleccionado == nombre;
+  Widget _buildTarjetaRecurso(Recurso r) {
+    final sel = _recursoSeleccionado == r.nombre;
     return GestureDetector(
       onTap: () => setState(() {
-        _recursoSeleccionado = nombre;
+        _recursoSeleccionado = r.nombre;
         _accesoriosSeleccionados.clear();
         _salonSeleccionado = null;
         _equipoSeleccionado = null;
@@ -133,10 +129,10 @@ class _SolicitarPrestamoScreenState extends State<SolicitarPrestamoScreen> {
               color: sel ? AppColors.primary : Colors.white54,
               width: sel ? 2.5 : 1.5)),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(data['icono'] as IconData, size: 30,
-              color: sel ? AppColors.primary : Colors.white),
+Icon(getIcon(r.icono), size: 30,
+    color: sel ? AppColors.primary : Colors.white),
           const SizedBox(height: 6),
-          Text(nombre, textAlign: TextAlign.center,
+          Text(r.nombre, textAlign: TextAlign.center,
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold,
                   color: sel ? AppColors.primary : Colors.white)),
         ]),
@@ -204,8 +200,7 @@ class _SolicitarPrestamoScreenState extends State<SolicitarPrestamoScreen> {
   }
 
   // Construye la sección de accesorios opcionales con checkboxes seleccionables
-  Widget _buildSeccionAccesorios() {
-    final accs = _recursos[_recursoSeleccionado]!['accesorios'] as List<String>;
+  Widget _buildSeccionAccesorios(List<String> accs) {
     return GlassCard(
       margin: const EdgeInsets.only(bottom: 16),
       borderRadius: 16,
@@ -294,25 +289,33 @@ class _SolicitarPrestamoScreenState extends State<SolicitarPrestamoScreen> {
           ),
           const SizedBox(width: 8),
           ElevatedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               final provider = context.read<AppProvider>();
-              final tipo = _recursos[_recursoSeleccionado]!['tipo'] as String;
-              final usuario = provider.usuarios.isNotEmpty
-                  ? provider.usuarios[0] : null;
+              if (provider.usuarioActual?.activo == false) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Cuenta desactivada'),
+                        backgroundColor: Colors.red));
+                return;
+              }
+              final recurso = provider.recursos
+                  .firstWhere((r) => r.nombre == _recursoSeleccionado);
+              final tip = _tipoRecurso(recurso);
+              final usuario = provider.usuarioActual;
               final solicitud = Solicitud(
                 id: 'sol_${DateTime.now().millisecondsSinceEpoch}',
                 usuarioNombre: usuario?.nombre ?? 'Usuario',
                 documento: usuario?.documento ?? '—',
                 programa: usuario?.programa ?? '—',
                 recursoNombre: _recursoSeleccionado!,
-                recursoIcono: _recursos[_recursoSeleccionado]!['icono'] as IconData,
-                accesorios: tipo == 'accesorio'
+                recursoIcono: recurso.icono,
+                accesorios: tip == 'accesorio'
                     ? List.from(_accesoriosSeleccionados)
-                    : tipo == 'computador'
+                    : tip == 'computador'
                         ? []
                         : [],
-                salon: tipo == 'computador' ? _salonSeleccionado : null,
-                equipo: tipo == 'computador' ? _equipoSeleccionado : null,
+                salon: tip == 'computador' ? _salonSeleccionado : null,
+                equipo: tip == 'computador' ? _equipoSeleccionado : null,
                 fechaPrestamo: DateTime(
                   _fechaPrestamo!.year, _fechaPrestamo!.month, _fechaPrestamo!.day,
                   _horaPrestamo!.hour, _horaPrestamo!.minute,
@@ -324,10 +327,11 @@ class _SolicitarPrestamoScreenState extends State<SolicitarPrestamoScreen> {
                 fechaSolicitud: DateTime.now(),
                 estado: EstadoSolicitud.pendiente,
               );
-              provider.agregarSolicitud(solicitud);
+              await provider.agregarSolicitud(solicitud);
+              if (!context.mounted) return;
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('¡Solicitud enviada!'),
+                  const SnackBar(content: Text('Solicitud enviada. Espera la aprobación del administrador.'),
                       backgroundColor: AppColors.primary));
               Navigator.pop(context);
             },
@@ -352,11 +356,11 @@ class _SolicitarPrestamoScreenState extends State<SolicitarPrestamoScreen> {
     return Row(children: [
       Icon(icono, color: AppColors.primaryLight, size: 20),
       const SizedBox(width: 10),
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
         Text(valor, style: const TextStyle(color: Colors.white, fontSize: 14,
-            fontWeight: FontWeight.bold)),
-      ]),
+            fontWeight: FontWeight.bold), softWrap: true),
+      ])),
     ]);
   }
 
@@ -450,11 +454,50 @@ class _SolicitarPrestamoScreenState extends State<SolicitarPrestamoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtiene el provider y el tipo del recurso seleccionado (computador, accesorio, simple)
     final provider = context.read<AppProvider>();
-    final tipo = _recursoSeleccionado != null
-        ? _recursos[_recursoSeleccionado]!['tipo'] as String
-        : null;
+    final esInactivo = provider.usuarioActual?.activo == false;
+
+    if (esInactivo) {
+      return BackgroundScaffold(
+        child: SafeArea(
+          child: Column(children: [
+            const HeaderWithBack(titulo: 'SOLICITAR PRÉSTAMO'),
+            const SizedBox(height: 40),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: GlassCard(
+                padding: const EdgeInsets.all(24),
+                borderRadius: 16,
+                child: Column(children: [
+                  const Icon(Icons.block, size: 48, color: Colors.redAccent),
+                  const SizedBox(height: 16),
+                  const Text('CUENTA DESACTIVADA',
+                      style: TextStyle(color: Colors.redAccent,
+                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  const Text('Tu cuenta ha sido desactivada. No puedes realizar solicitudes de préstamo.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 14)),
+                ]),
+              ),
+            ),
+          ]),
+        ),
+      );
+    }
+
+    final recursos = provider.recursos;
+    Recurso? recursoSel;
+    String? tipo;
+    if (_recursoSeleccionado != null) {
+      try {
+        recursoSel = recursos.firstWhere((r) => r.nombre == _recursoSeleccionado);
+        tipo = _tipoRecurso(recursoSel);
+      } catch (_) {
+        recursoSel = null;
+        tipo = null;
+      }
+    }
 
     return BackgroundScaffold(
       child: SafeArea(
@@ -475,13 +518,13 @@ class _SolicitarPrestamoScreenState extends State<SolicitarPrestamoScreen> {
                 crossAxisCount: 4, shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 8, mainAxisSpacing: 8, childAspectRatio: 0.85,
-                children: _recursos.keys.map(
+                children: recursos.map(
                     (r) => _buildTarjetaRecurso(r)).toList(),
               ),
               const SizedBox(height: 20),
               // Secciones dinámicas según el tipo de recurso seleccionado
               if (tipo == 'computador') _buildSeccionComputador(provider),
-              if (tipo == 'accesorio') _buildSeccionAccesorios(),
+              if (tipo == 'accesorio') _buildSeccionAccesorios(recursoSel!.accesoriosIncluidos),
               // Fechas y botón de envío solo si hay un recurso seleccionado
               if (_recursoSeleccionado != null) _buildFechasHoras(),
               if (_recursoSeleccionado != null)

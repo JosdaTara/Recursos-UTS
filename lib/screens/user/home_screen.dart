@@ -37,8 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Cantidad de notificaciones no leídas, para mostrar el badge rojo
-    final noLeidas = context.watch<AppProvider>().notificacionesNoLeidas;
+    final provider = context.watch<AppProvider>();
+    final noLeidas = provider.notificacionesNoLeidas;
     return BackgroundScaffold(
       backgroundColor: AppColors.bgDark,
       child: SafeArea(
@@ -52,7 +52,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ]),
           const SizedBox(height: 48),
           // Mensaje de bienvenida al usuario
-          const Text('BIENVENIDO\nUSUARIO', textAlign: TextAlign.center,
+          Text('BIENVENIDO\n${provider.usuarioActual?.nombre.toUpperCase() ?? 'USUARIO'}',
+              textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontSize: 36,
                   fontWeight: FontWeight.bold, height: 1.2)),
           const Spacer(),

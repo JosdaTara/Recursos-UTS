@@ -32,9 +32,6 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
 
-  static const _adminCorreo = 'admin@uts.com';
-  static const _adminContrasena = 'admin123';
-
   @override
   void initState() {
     super.initState();
@@ -58,6 +55,58 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  // Muestra un diálogo para ingresar correo y enviar restablecimiento de contraseña
+  void _mostrarDialogoOlvideContrasena() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.bgDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('RESTABLECER CONTRASEÑA',
+            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Tu correo institucional',
+            hintStyle: const TextStyle(color: Colors.white60),
+            filled: true, fillColor: Colors.white.withValues(alpha: 0.15),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context),
+              child: const Text('CANCELAR', style: TextStyle(color: Colors.white54))),
+          ElevatedButton(
+            onPressed: () {
+              final correo = controller.text.trim();
+              if (correo.isNotEmpty) {
+                Navigator.pop(context);
+                _enviarOlvideContrasena(correo);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: const StadiumBorder()),
+            child: const Text('ENVIAR', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Envía el correo de restablecimiento de contraseña a través de Firebase Auth
+  Future<void> _enviarOlvideContrasena(String correo) async {
+    final provider = context.read<AppProvider>();
+    final error = await provider.olvideContrasena(correo);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error ?? 'Correo de restablecimiento enviado'),
+        backgroundColor: error != null ? Colors.red : Colors.green,
+      ),
+    );
+  }
+
   // Método que procesa el inicio de sesión
   Future<void> _ingresar() async {
     final correo = _correoController.text.trim();
@@ -72,36 +121,28 @@ class _LoginScreenState extends State<LoginScreen>
 
     setState(() => _cargando = true);
     final provider = context.read<AppProvider>();
-    await Future.doWhile(() => Future.delayed(const Duration(milliseconds: 100),
-        () => !provider.cargando));
+    int esperas = 0;
+    while (provider.cargando && esperas < 50) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      esperas++;
+    }
     if (!mounted) return;
 
-    if (correo == _adminCorreo && pass == _adminContrasena) {
+    final error = await provider.iniciarSesion(correo, pass, recordar: _mantenerSesion);
+    if (!mounted) return;
+    setState(() => _cargando = false);
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red));
+      return;
+    }
+
+    if (provider.esAdmin) {
       Navigator.pushReplacementNamed(context, '/homeAdmin');
-      return;
+    } else {
+      Navigator.pushReplacementNamed(context, '/home');
     }
-
-    // Busca el usuario en la lista de Firestore
-    final usuario = provider.usuarios.where((u) => u.correo == correo).firstOrNull;
-    if (usuario == null || usuario.password != pass) {
-      setState(() => _cargando = false);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Correo o contraseña incorrectos'),
-              backgroundColor: Colors.red));
-      return;
-    }
-
-    if (!usuario.activo) {
-      setState(() => _cargando = false);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tu cuenta está desactivada'),
-              backgroundColor: Colors.red));
-      return;
-    }
-
-    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
@@ -160,7 +201,14 @@ class _LoginScreenState extends State<LoginScreen>
                     Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              final correo = _correoController.text.trim();
+                              if (correo.isEmpty) {
+                                _mostrarDialogoOlvideContrasena();
+                              } else {
+                                _enviarOlvideContrasena(correo);
+                              }
+                            },
                             child: const Text('¿Olvidó su contraseña?',
                                 style: TextStyle(
                                     color: Colors.white,

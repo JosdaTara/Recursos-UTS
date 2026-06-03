@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Categorías para clasificar y filtrar los recursos
@@ -6,7 +5,7 @@ enum CategoriaRecurso { todos, equipos, cables, otros }
 
 class Recurso {
   String nombre;
-  IconData icono;
+  String icono;
   int total;
   int disponible;
   CategoriaRecurso categoria;
@@ -27,7 +26,7 @@ class Recurso {
 
   Map<String, dynamic> toFirestore() => {
     'nombre': nombre,
-    'icono': icono.codePoint,
+    'icono': icono,
     'total': total,
     'disponible': disponible,
     'categoria': categoria.name,
@@ -39,7 +38,8 @@ class Recurso {
     final d = doc.data() as Map<String, dynamic>;
     return Recurso(
       nombre: d['nombre'] as String,
-      icono: IconData(d['icono'] as int, fontFamily: 'MaterialIcons'),
+      icono: d['icono'] is String && (d['icono'] as String).isNotEmpty
+          ? d['icono'] as String : 'inventory_2',
       total: d['total'] as int,
       disponible: d['disponible'] as int,
       categoria: CategoriaRecurso.values.firstWhere(

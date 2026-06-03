@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_recursos_uts/providers/app_provider.dart';
 import 'package:flutter_recursos_uts/theme/app_theme.dart';
+import 'package:flutter_recursos_uts/utils/icon_utils.dart';
 import 'package:flutter_recursos_uts/widgets/background_scaffold.dart';
 import 'package:flutter_recursos_uts/widgets/estado_badge.dart';
 import 'package:flutter_recursos_uts/widgets/filter_chip_row.dart';
@@ -94,7 +95,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
             Container(width: 65, height: 65,
                 decoration: const BoxDecoration(color: Colors.white,
                     shape: BoxShape.circle),
-                child: Icon(h['icono'] as IconData, size: 34,
+                child: Icon(getIcon(h['icono'] as String), size: 34,
                     color: AppColors.primary)),
             const SizedBox(height: 12),
             Text(h['recurso'] as String, style: const TextStyle(
@@ -206,7 +207,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
               Container(width: 44, height: 44,
                   decoration: const BoxDecoration(color: Colors.white,
                       shape: BoxShape.circle),
-                  child: Icon(mas['icono'] as IconData,
+                  child: Icon(getIcon(mas['icono'] as String),
                       color: AppColors.primary, size: 22)),
               const SizedBox(width: 12),
               Expanded(child: Column(
@@ -249,11 +250,13 @@ class _HistorialScreenState extends State<HistorialScreen> {
                           style: TextStyle(
                               color: Colors.white70, fontSize: 15)),
                     ]))
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: filtrado.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, i) {
+                : RefreshIndicator(
+                    onRefresh: () => context.read<AppProvider>().refrescarDatos(),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: filtrado.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, i) {
                       final h = filtrado[i];
                       final String estado = h['estado'] as String;
                       final List accesorios = h['accesorios'] as List;
@@ -265,7 +268,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
                                 decoration: const BoxDecoration(
                                     color: Colors.white,
                                     shape: BoxShape.circle),
-                                child: Icon(h['icono'] as IconData, size: 26,
+                                child: Icon(getIcon(h['icono'] as String), size: 26,
                                     color: AppColors.primary)),
                             const SizedBox(width: 14),
                             Expanded(child: Column(
@@ -294,6 +297,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
                         ),
                       );
                     },
+                    ),
                   ),
           ),
           const SizedBox(height: 16),

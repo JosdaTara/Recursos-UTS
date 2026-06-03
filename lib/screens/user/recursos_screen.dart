@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_recursos_uts/models/equipo.dart';
 import 'package:flutter_recursos_uts/models/recurso.dart';
 import 'package:flutter_recursos_uts/providers/app_provider.dart';
 import 'package:flutter_recursos_uts/theme/app_theme.dart';
+import 'package:flutter_recursos_uts/utils/icon_utils.dart';
 import 'package:flutter_recursos_uts/widgets/background_scaffold.dart';
 import 'package:flutter_recursos_uts/widgets/filter_chip_row.dart';
 import 'package:flutter_recursos_uts/widgets/glass_card.dart';
@@ -45,8 +47,8 @@ class _RecursosScreenState extends State<RecursosScreen> {
   }
 
   // Muestra un modal bottom sheet con los equipos de un salón y su estado (disponible/ocupado)
-  void _mostrarDetallesSalon(String salon, List<dynamic> equipos) {
-    final disponibles = equipos.where((e) => e.disponible == true).length;
+  void _mostrarDetallesSalon(String salon, List<Equipo> equipos) {
+    final disponibles = equipos.where((e) => e.disponible).length;
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.primary,
@@ -68,7 +70,7 @@ class _RecursosScreenState extends State<RecursosScreen> {
             crossAxisCount: 3, shrinkWrap: true, crossAxisSpacing: 10,
             mainAxisSpacing: 10, childAspectRatio: 1.8,
             children: equipos.map((e) {
-              final disp = e.disponible as bool;
+              final disp = e.disponible;
                return Container(
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.1),
@@ -81,7 +83,7 @@ class _RecursosScreenState extends State<RecursosScreen> {
                       color: disp ? AppColors.primaryLight : Colors.redAccent,
                       size: 18),
                   const SizedBox(height: 2),
-                  Text(e.nombre as String, style: TextStyle(
+                   Text(e.nombre, style: TextStyle(
                       color: disp ? AppColors.primaryLight : Colors.redAccent,
                       fontSize: 11, fontWeight: FontWeight.bold)),
                   Text(disp ? 'Libre' : 'Ocupado', style: TextStyle(
@@ -98,26 +100,29 @@ class _RecursosScreenState extends State<RecursosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtiene el provider y la lista de recursos filtrados por categoría
     final provider = context.watch<AppProvider>();
     final filtrados = _recursosFiltrados(provider);
+    final equiposDisponibles = filtrados
+        .where((r) => r.categoria == CategoriaRecurso.equipos &&
+            r.nombre != 'COMPUTADOR')
+        .toList();
+    final otros = filtrados
+        .where((r) => r.categoria != CategoriaRecurso.equipos)
+        .toList();
 
     return BackgroundScaffold(
       child: SafeArea(
         child: Column(children: [
           const HeaderWithBack(titulo: 'VER RECURSOS'),
           const SizedBox(height: 20),
-          // Filtros tipo chip para seleccionar categoría (TODOS, EQUIPOS, CABLES, OTROS)
           FilterChipRow(
             filtros: _categorias, seleccionado: _categoriaSeleccionada,
             onChanged: (f) => setState(() => _categoriaSeleccionada = f)),
           const SizedBox(height: 16),
-          // Lista scrollable de recursos filtrados
           Expanded(child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-              // Sección de computadores agrupados por salón con barra de progreso
               if (_categoriaSeleccionada == 'TODOS' ||
                   _categoriaSeleccionada == 'EQUIPOS') ...[
                 const Text('COMPUTADORES POR SALÓN',
@@ -173,18 +178,61 @@ class _RecursosScreenState extends State<RecursosScreen> {
                 }),
                 const SizedBox(height: 16),
               ],
-              // Sección de otros recursos (cables, accesorios) filtrados por categoría
-              if (filtrados.isNotEmpty) ...[
-                const Text('OTROS RECURSOS', style: AppStyles.subtitleWhite),
+              if (equiposDisponibles.isNotEmpty &&
+                  (_categoriaSeleccionada == 'TODOS' ||
+                      _categoriaSeleccionada == 'EQUIPOS')) ...[
+                const Text('EQUIPOS DISPONIBLES',
+                    style: AppStyles.subtitleWhite),
                 const SizedBox(height: 10),
-                ...filtrados.map((r) => GlassCard(
+                ...equiposDisponibles.map((r) => GlassCard(
                   margin: const EdgeInsets.only(bottom: 10),
                   borderRadius: 16,
                   child: Row(children: [
                     Container(width: 50, height: 50,
                         decoration: const BoxDecoration(
                             color: Colors.white, shape: BoxShape.circle),
-                        child: Icon(r.icono, color: AppColors.primary, size: 26)),
+                        child: Icon(getIcon(r.icono),
+                            color: AppColors.primary, size: 26)),
+                    const SizedBox(width: 14),
+                    Expanded(child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      Text(r.nombre, style: AppStyles.whiteBold16),
+                      const SizedBox(height: 4),
+                      Row(children: [
+                        Text('${r.disponible} disponibles',
+                            style: TextStyle(
+                                color: _colorDisponibilidad(
+                                    r.disponible, r.total),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold)),
+                        Text(' de ${r.total}', style: AppStyles.white70_12),
+                      ]),
+                      const SizedBox(height: 6),
+                      ClipRRect(borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: r.porcentajeDisponible,
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.2),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                _colorDisponibilidad(r.disponible, r.total)),
+                            minHeight: 6)),
+                    ])),
+                  ]),
+                )),
+                const SizedBox(height: 16),
+              ],
+              if (otros.isNotEmpty) ...[
+                const Text('OTROS RECURSOS', style: AppStyles.subtitleWhite),
+                const SizedBox(height: 10),
+                ...otros.map((r) => GlassCard(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  borderRadius: 16,
+                  child: Row(children: [
+                    Container(width: 50, height: 50,
+                        decoration: const BoxDecoration(
+                            color: Colors.white, shape: BoxShape.circle),
+                        child: Icon(getIcon(r.icono), color: AppColors.primary, size: 26)),
                     const SizedBox(width: 14),
                     Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start, children: [
