@@ -60,70 +60,65 @@ flutter pub get
 flutter run
 ```
 
-## Estructura del proyecto
+## Carpeta `lib/`
 
-La lógica de la aplicación se encuentra en la carpeta `lib/`, organizada de la siguiente manera:
+La carpeta `lib/` contiene todo el código fuente de la aplicación Flutter. Está organizada siguiendo una arquitectura por capas:
+
+### `main.dart`
+Archivo principal que inicializa Firebase, configura el `Provider` como gestor de estado global y lanza la aplicación.
+
+### `models/`
+Define las clases de datos (DTOs) que representan las entidades del sistema:
+- **Usuario** — datos personales, rol (admin/estudiante), estado activo/inactivo
+- **Recurso** — ítems del inventario con nombre, icono, cantidad total, disponible y categoría (equipos, cables, otros)
+- **Solicitud** — petición de préstamo hecha por un usuario con fechas, recurso y accesorios
+- **Prestamo** — préstamo ya aprobado con estado (activo, devuelto, vencido)
+- **Notificación** — alerta del sistema con tipo, mensaje y destinatario
+- **Equipo** — equipo de cómputo individual dentro de un salón
+
+### `providers/`
+Contiene `app_provider.dart`, un `ChangeNotifier` que actúa como capa de estado central. Aquí se gestionan:
+- Autenticación (inicio de sesión, registro, cierre)
+- CRUD de usuarios, recursos, solicitudes, préstamos y notificaciones
+- Lógica de negocio: aprobar/rechazar solicitudes, registrar devoluciones, generar alertas de vencimiento
+- Sincronización con Firestore y fallback local ante fallos de conexión
+
+### `screens/`
+Agrupa las pantallas según el rol del usuario:
+- **`admin/`** — panel de control, gestión de solicitudes, CRUD de recursos y salones, historial, escáner de barras
+- **`user/`** — explorar recursos, solicitar préstamo, mis préstamos, perfil, notificaciones
+- **`login/`** — inicio de sesión y registro de nuevos usuarios
+- **`start/`** — splash screen de carga
+
+### `services/`
+Capa de acceso a datos externos:
+- **`firestore_service.dart`** — operaciones CRUD contra Firebase Firestore (usuarios, recursos, solicitudes, préstamos, notificaciones)
+- **`notificacion_service.dart`** — notificaciones push locales en el dispositivo
+
+### `theme/`
+Define la paleta de colores (`AppColors`), estilos de texto (`AppStyles`) y la configuración visual global de la interfaz.
+
+### `utils/`
+Contiene `icon_utils.dart`, un mapa que convierte nombres de icono en formato `String` (ej. `"computer"`, `"videocam"`) a objetos `IconData` de Flutter.
+
+### `widgets/`
+Componentes visuales reutilizables: tarjetas con efecto glassmorphism (`GlassCard`), barras de filtros (`FilterChipRow`), indicadores de estado (`EstadoBadge`), encabezados con retroceso (`HeaderWithBack`), entre otros.
 
 ```
 lib/
-├── main.dart                    # Punto de entrada de la app
-│                                # Inicializa Firebase, Provider y carga inicial
-│
-├── models/                      # Modelos de datos (DTOs)
-│   ├── equipo.dart              # Equipo de cómputo dentro de un salón
-│   ├── notificacion.dart        # Notificación del sistema (solicitud, aprobado, vencido)
-│   ├── prestamo.dart            # Préstamo activo, devuelto o vencido
-│   ├── recurso.dart             # Recurso del inventario (categoría, icono, disponibilidad)
-│   ├── solicitud.dart           # Solicitud de préstamo hecha por un usuario
-│   └── usuario.dart             # Usuario registrado (admin o estudiante)
-│
+├── main.dart
+├── models/
 ├── providers/
-│   └── app_provider.dart        # Estado central con ChangeNotifier
-│                                # Maneja usuarios, recursos, solicitudes, préstamos,
-│                                # notificaciones, autenticación y toda la lógica de negocio
-│
-├── screens/                     # Pantallas de la interfaz
-│   ├── admin/                   # Pantallas exclusivas del administrador
-│   │   ├── escaner_screen.dart           # Escáner de código de barras
-│   │   ├── gestion_recursos_screen.dart  # CRUD de recursos y salones
-│   │   ├── gestion_usuarios_screen.dart  # Gestión de usuarios
-│   │   ├── historial_screen.dart         # Historial de préstamos
-│   │   ├── home_admin_screen.dart        # Panel principal con estadísticas
-│   │   └── solicitudes_screen.dart       # Aprobar/rechazar solicitudes
-│   ├── login/                   # Autenticación
-│   │   ├── login_screen.dart             # Inicio de sesión
-│   │   └── register_screen.dart          # Registro de nuevo usuario
+│   └── app_provider.dart
+├── screens/
+│   ├── admin/
+│   ├── login/
 │   ├── start/
-│   │   └── splash_screen.dart            # Pantalla de carga inicial
-│   └── user/                    # Pantallas del usuario común
-│       ├── home_screen.dart              # Menú principal del usuario
-│       ├── menu_screen.dart              # Menú lateral de navegación
-│       ├── mis_prestamos_screen.dart     # Historial de préstamos propios
-│       ├── notificaciones_screen.dart    # Bandeja de notificaciones
-│       ├── perfil_screen.dart            # Perfil con foto personalizable
-│       ├── recursos_screen.dart          # Explorar recursos disponibles
-│       └── solicitar_prestamo_screen.dart# Formulario de solicitud
-│
-├── services/                    # Capa de acceso a datos y servicios externos
-│   ├── firestore_service.dart   # CRUD contra Firebase Firestore
-│   └── notificacion_service.dart# Notificaciones push locales
-│
+│   └── user/
+├── services/
 ├── theme/
-│   └── app_theme.dart           # Paleta de colores, estilos de texto y temas
-│
 ├── utils/
-│   └── icon_utils.dart          # Mapa de nombres de icono (String → IconData)
-│
-└── widgets/                     # Componentes reutilizables
-    ├── background_scaffold.dart         # Fondo con gradiente
-    ├── custom_back_button.dart          # Botón de retroceso personalizado
-    ├── estado_badge.dart                # Badge de estado (activo/inactivo/pendiente)
-    ├── filter_chip_row.dart             # Fila de chips para filtrar listas
-    ├── glass_card.dart                  # Tarjeta con estilo glassmorphism
-    ├── header_with_back.dart            # Encabezado con botón de retroceso
-    ├── info_row.dart                    # Fila de información (icono + label + valor)
-    ├── section_divider.dart             # Divisor de sección con título
-    └── stat_card.dart                   # Tarjeta de estadística numérica
+└── widgets/
 ```
 
 ## Licencia
