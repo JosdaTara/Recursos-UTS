@@ -2,10 +2,6 @@
 
 Sistema de préstamo de recursos tecnológicos para las Unidades Tecnológicas de Santander (UTS). Desarrollado en **Flutter** con gestión en memoria y dos roles: **Administrador** y **Usuario**.
 
-## Capturas de pantalla
-
-*(Agrega aquí capturas de la app)*
-
 ## Funcionalidades
 
 ### Rol Usuario
