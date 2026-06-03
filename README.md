@@ -1,61 +1,5 @@
 # Recursos UTS
 
-Sistema de préstamo de recursos tecnológicos para las Unidades Tecnológicas de Santander (UTS). Desarrollado en **Flutter** con gestión en memoria y dos roles: **Administrador** y **Usuario**.
-
-## Funcionalidades
-
-### Rol Usuario
-- Inicio de sesión y registro
-- Visualizar recursos disponibles (computadores por salón, cables, accesorios)
-- Solicitar préstamo de recursos con selección de fechas y horarios
-- Apartar equipo de cómputo (salón + equipo)
-- Ver historial de préstamos propios
-- Perfil con foto personalizable
-- Notificaciones de alertas (préstamos por vencer, vencidos)
-
-### Rol Administrador
-- Panel principal con resumen estadístico (solicitudes pendientes, préstamos activos, recursos disponibles, usuarios)
-- Alertas visuales para solicitudes pendientes, préstamos por vencer y activos
-- Gestión de solicitudes (aprobar / rechazar)
-- CRUD de recursos del inventario
-- Gestión de usuarios (activar / desactivar)
-- Historial completo de préstamos
-- Escáner de código de barras para registrar devoluciones
-- Notificaciones del sistema
-
-## Tecnologías usadas
-
-- **Flutter 3.41.7** — Framework de UI multiplataforma
-- **Dart 3.11.5** - Lenguaje
-- **Provider** — Manejo de estado
-- **Firebase Auth** — Autenticación de usuarios
-- **Cloud Firestore** — Base de datos en la nube
-- **Mobile Scanner** — Escaneo de códigos de barras
-- **Flutter Local Notifications** — Notificaciones push locales
-- **Image Picker** — Selección de fotos de perfil
-
-## Requisitos
-
-- Flutter SDK >= 3.0
-- Dart >= 3.0
-- Dispositivo o emulador Android / iOS
-
-## Instalación
-
-```bash
-# Clonar el repositorio
-git clone https://github.com/JosdaTara/Recursos-UTS.git
-
-# Entrar al directorio
-cd Recursos-UTS
-
-# Obtener dependencias
-flutter pub get
-
-# Ejecutar en modo debug
-flutter run
-```
-
 ## Carpeta `lib/`
 
 La carpeta `lib/` contiene todo el código fuente de la aplicación Flutter. Está organizada siguiendo una arquitectura por capas:
@@ -116,7 +60,3 @@ lib/
 ├── utils/
 └── widgets/
 ```
-
-## Licencia
-
-Este proyecto fue desarrollado con fines académicos para las Unidades Tecnológicas de Santander.
